@@ -1,0 +1,145 @@
+{
+  "test_messages": [
+    {
+      "description": "Normal mesaj - güvenli",
+      "data": {
+        "message": "Merhaba, bugün toplantımız var mı?",
+        "sender_phone": "05551234567"
+      },
+      "expected_result": {
+        "is_fraud": false,
+        "risk_score_range": [0, 30]
+      }
+    },
+    {
+      "description": "Dolandırıcılık mesajı - yüksek risk",
+      "data": {
+        "message": "ACİL! Banka hesabınız bloke oldu. Şifrenizi doğrulamak için hemen bu linke tıklayın: http://sahte-banka.com/login",
+        "sender_phone": "08501234567"
+      },
+      "expected_result": {
+        "is_fraud": true,
+        "risk_score_range": [70, 100]
+      }
+    },
+    {
+      "description": "Ödül dolandırıcılığı",
+      "data": {
+        "message": "Tebrikler! 50.000 TL kazandınız. Bedava ödülünüzü almak için hemen bu linke tıklayın!",
+        "sender_phone": "05559876543"
+      },
+      "expected_result": {
+        "is_fraud": true,
+        "risk_score_range": [60, 95]
+      }
+    },
+    {
+      "description": "Kredi kartı dolandırıcılığı",
+      "data": {
+        "message": "Kredi kartınızın güvenliği için CVV ve şifrenizi gönderiniz. Son şansınız!",
+        "sender_phone": "08909876543"
+      },
+      "expected_result": {
+        "is_fraud": true,
+        "risk_score_range": [80, 100]
+      }
+    },
+    {
+      "description": "İş teklifi (düşük risk)",
+      "data": {
+        "message": "Merhaba, online iş fırsatı için bilgi almak ister misiniz?",
+        "sender_phone": "05334567890"
+      },
+      "expected_result": {
+        "is_fraud": false,
+        "risk_score_range": [0, 40]
+      }
+    }
+  ],
+  
+  "test_phones": [
+    {
+      "description": "Normal cep telefonu",
+      "data": {"phone_number": "05551234567"},
+      "expected_result": {"is_fraud": false, "risk_score_range": [0, 30]}
+    },
+    {
+      "description": "Şüpheli 0850 numarası",
+      "data": {"phone_number": "08501234567"},
+      "expected_result": {"is_fraud": true, "risk_score_range": [40, 80]}
+    },
+    {
+      "description": "Geçersiz format",
+      "data": {"phone_number": "123456"},
+      "expected_result": {"is_fraud": true, "risk_score_range": [50, 100]}
+    },
+    {
+      "description": "Uluslararası format",
+      "data": {"phone_number": "+905551234567"},
+      "expected_result": {"is_fraud": false, "risk_score_range": [0, 30]}
+    }
+  ],
+  
+  "test_urls": [
+    {
+      "description": "Güvenli HTTPS site",
+      "data": {"url": "https://www.google.com"},
+      "expected_result": {"is_fraud": false, "risk_score_range": [0, 20]}
+    },
+    {
+      "description": "IP adresi ile erişim",
+      "data": {"url": "http://192.168.1.1/login"},
+      "expected_result": {"is_fraud": true, "risk_score_range": [70, 100]}
+    },
+    {
+      "description": "Kısaltılmış URL",
+      "data": {"url": "https://bit.ly/suspicious-link"},
+      "expected_result": {"is_fraud": true, "risk_score_range": [60, 100]}
+    },
+    {
+      "description": "Sahte banka domaini",
+      "data": {"url": "https://garanti.net/login"},
+      "expected_result": {"is_fraud": true, "risk_score_range": [60, 100]}
+    },
+    {
+      "description": "HTTP (güvensiz) protokol",
+      "data": {"url": "http://example.com"},
+      "expected_result": {"is_fraud": false, "risk_score_range": [30, 60]}
+    }
+  ],
+  
+  "curl_examples": {
+    "message_analysis": {
+      "description": "Mesaj analizi için cURL komutu",
+      "command": "curl -X POST 'http://localhost:8000/analyze/message' -H 'Content-Type: application/json' -d '{\"message\": \"ACİL! Hesabınız bloke oldu\", \"sender_phone\": \"05551234567\"}'"
+    },
+    "phone_check": {
+      "description": "Telefon kontrolü için cURL komutu",
+      "command": "curl -X POST 'http://localhost:8000/analyze/phone' -H 'Content-Type: application/json' -d '{\"phone_number\": \"08501234567\"}'"
+    },
+    "url_check": {
+      "description": "URL kontrolü için cURL komutu",
+      "command": "curl -X POST 'http://localhost:8000/analyze/url' -H 'Content-Type: application/json' -d '{\"url\": \"http://192.168.1.1/phishing\"}'"
+    },
+    "health_check": {
+      "description": "Sağlık kontrolü için cURL komutu",
+      "command": "curl -X GET 'http://localhost:8000/health'"
+    }
+  },
+  
+  "risk_scoring_examples": {
+    "description": "Risk puanlama örnekleri ve açıklamaları",
+    "scoring_rules": {
+      "fraud_keywords": "Her şüpheli kelime için +15 puan",
+      "urls_in_message": "Mesajda link varsa +25 puan",
+      "phone_in_message": "Mesajda telefon numarası varsa +20 puan",
+      "urgency_words": "Aciliyet ifadeleri için +30 puan",
+      "money_related": "Para/ödeme kelimeleri için +25 puan"
+    },
+    "fraud_threshold": {
+      "message_analysis": 60,
+      "phone_analysis": 50,
+      "url_analysis": 50
+    }
+  }
+}
